@@ -3,13 +3,253 @@ title: "Analysis of staffing levels for nursing and adult inpatient care"
 author: "Mairead Bermingham"
 date: "2023-08-10"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_knit$set(root.dir = 'C:/Users/mberm/OneDrive/Documents/Staffing_levels_for_Nursing_and_Adult_Inpatient_Care_Quality_and_Safety')
+```
+## Scenario
+I have been asked to analyse staffing levels data collected daily by the Senior Charge Nurse,and to resent and discuss finding at hospital management meeting to discuss safe staffing levels within Hospital X.
+We have been invited to attend  The Data tab of this spreadsheet contains data in the fields explained below and is  You have been asked to analyse.
+As part of your presentation, I was asked consider the following:
+Clinical area A is a 25 bedded ward, and
+Clinical area B is a 30 bedded ward.
+Bed capacity can be over 100% due to admissions/discharges and opening of surge beds where available.
+
+Staffing dtaa
+
+•	the data used to relate workload to staffing required per shift on a daily basis
+
+Systems to plan nurse staffing inevitably focus on
+known characteristics – size of the population, number
+of beds, number of patients, dependency mix of
+patients and associated nursing activity. These factors
+are used to predict the volume of nursing care needed,
+and then related to staffing numbers required
+
+
+All data, charts, images, documents and code associate with project can be accessed from  [gitHub](https://github.com/MaireadLBermingham/Staffing_levels_for_Nursing_and_Adult_Inpatient_Care_Quality_and_Safety.git)
+
+ 
+
+
+# Generating the DMA Exercise working data 
+I develop accessible, transparent, time saving, data and measurement handing pipelines, exploratory and downstream analyses and  reports in RMarkdown, and use GitHub version control to make it possible for others, including my future self,  to collaborate on projects and reproduce results. Many stakeholder are not familiar with  R nor accessing project folder and documents via GitHub.  I there for produce less technical, code free reports, MS Excel Workbooks and PowerPoint presentations as part of my workflow to facilitate collaboration with less technical stakeholders.
+
+```{r ReadInDAta, echo = FALSE, message = FALSE}
+###Reading in the DMA Exercise data
+library(tidyverse)
+library(readxl)
+DMA_data<-read_xlsx("./Data/RawData/DMA Exercise.xlsx", sheet = "Data", skip = 2)
+colnames(DMA_data)[1]<-c("Date")
+colnames(DMA_data)[2]<-c("Day")
+colnames(DMA_data)[3]<-c("ClinicalArea")
+colnames(DMA_data)[14]<-c("Activity")
 ```
 
-## R Markdown
+Table 1. DMA Exercise data structure.
+```{r  DataDescription, message = FALSE}
+library(knitr)
+kable(str(DMA_data))
+```
+
+The data fame included 14 variables and 54 rows. The 'Day of week','Total Headcount', 'Total Patients',  'Maximum Bed Capacity','Available Patient Beds', and '% area capacity currently in use (Total Patients/Maximum Bed Capacity)' variables are empty and need to be populated.  
+
+## Populating the day of the week variable
+
+I use the 'lubricate' package to extract the day of the week from the Date variable. 'Lubridate' is an R package that makes it easier to work with dates and times. 
+
+# Looking at the consistence of collection across week days.
+
+Table 1. Frequency distribution of day of the week by Clinical area.
+```{r  WeekDay, message = FALSE}
+DMA_data<-DMA_data %>%
+  mutate(Day= wday(Date, label = TRUE, week_start = 1)) # (Mon is the first level))
+ DMA_data %>%
+  group_by(ClinicalArea)  %>% 
+  summarise(as_tibble(rbind(summary(Day))))
+```
+Consistency of collection appears greater in Clinical area B based on the frequency distribution of day of the week.  There appears at first glance to be a relationship between low week day counts in Clinical area A and data collected in Clinical area A. Could it be that the team misassigned the name of the clinical area. 
+
+# Eaxmining the realtionship between dates data was collected in Clinical area C and the other two areas.
+Table 1. DMA Exercise data for the dates when it was collected in Clinical area C.
+```{r  ClinicalAreaCdates, message = FALSE}
+DatesToExamineC <- DMA_data %>% filter(ClinicalArea=="C") %>% select(Date)
+
+#Select rows that contain dates when data was collected in Clinical area C
+DatesToExamineC_ABC <-  DMA_data %>% filter(Date %in% DatesToExamineC$Date)
+kable(DatesToExamineC_ABC)
+```
+There is only one of the three dates, the 11/1/2023 that you could infer the the team may have misassigned the name of the Clinical area B with C.  I would have to confirm this with the the Senior Charge Nurse before making this change. For the purpose, of the analyses for the upcoming meeting, I will assume the data has been correctly assassinated to Clinical area C.  For the other two dates, data was collected at all three Clinical areas.
+
+  
+#### Clinical area C 
+
+'Maximum Bed Capacity' for Clinical area C was not provided. The last three row of the data were as such removed from downstream analyses.
+
+Table 1. Clinical area C DMA Exercise data.
+```{r  ClinicalareaC_Data, message = FALSE}
+library(dplyr)
+DMA_data<-arrange(DMA_data,  ClinicalArea,Date)
+tl<-tail(DMA_data,n=4)
+kable(tl)
+#Delete last three  rows
+DMA_data <- DMA_data %>% filter(ClinicalArea!="C")
+```
+
+Ward capacity details were not provided for Clinical area C. As such the '% area capacity currently in use' measure can not be calculated. Only Clinical area A and B will be included in down stream analysis, and The last three records in the data set from Clinical area C  removed. 
+
+
+
+#### Exmaming the consistsnce of data colection in Cinical areas A and B.
+To determine the consistency of data collection I calculated the data collection interval.
+Table 1. The frequency distribution of Collection interval by Clinical Area .
+```{r  ClinicalareaAB_data, echo=FALSE, message = FALSE}
+#Populate lagged date by Clinical Area
+DMA_dataLag<-DMA_data %>% 
+  mutate(Date = as.Date(Date)) %>%
+  select(ClinicalArea,Date) %>%
+  arrange(ClinicalArea, Date) %>% 
+  group_by(ClinicalArea) %>%
+  mutate(lag1_Date = lag(Date, n=1)) %>%
+  mutate(lag1_ClinicalArea = lag(ClinicalArea, n=1)) %>%
+  mutate(lag1_Date=ifelse(ClinicalArea == "A" & lag1_ClinicalArea == "B", NA, lag1_Date))  %>% # Apply filter & is.na to remove rows with lag1_Date==NA
+  filter(!is.na(lag1_Date)) %>%
+  mutate(lag1_Date = as.Date(lag1_Date)) %>%
+  ## Calculate the number of days between collection dates.
+  mutate(CollectionInterval = as.numeric(difftime(ymd(Date), 
+         ymd(lag1_Date), units = "days")))
+#nrow(DMA_data)
+#51
+#nrow(DMA_dataLag)
+#49
+DMA_data<-DMA_data %>% left_join(DMA_dataLag)
+#nrow(DMA_data)
+#51
+
+#Calculate frequency and percentage of  Collection interval, grouped by Clinical Area
+
+require(knitr)
+require(formattable)
+FT<-DMA_data %>%
+  filter(!is.na(lag1_Date)) %>%
+  group_by(ClinicalArea, CollectionInterval) %>%
+  summarise(Frequency = n()) %>%
+  mutate(Percent= percent((Frequency / sum(Frequency))))
+kable(FT, col.names = c("Clinical area","Collection interval","Frequency","Percent"))
+#Remove the redundant table
+rm(FT)
+
+```
+The consistency of data collection was much higher in Clinical area B, compared to A. In total, 89% of records were collected within one data, as opposed to 68% in clinical area C.
+
+```
+
+
+## Populating the 'Maximum Bed Capacity' variable
+In the 'Scenarui tab in the DMA Exercise data we were informed that Clinical area A is a 25 bedded ward, and
+Clinical area B is a 30 bedded ward. Futhermore we were told that bed capacity can be over 100% due to admissions/discharges and opening of surge beds where available.
+
+
+
+
+The original DMA Exercise data Excel file was read in again, and a working DMA Exercise working data Excel file set up in the project output data folder to collect, data updates, summary tables, charts, results and comments for stakeholder to review prior to the Hospital X management meeting.
+
+```{r Addworkbook, echo = FALSE, message = FALSE}
+library(tidyverse)
+library(openxlsx)
+wb <- loadWorkbook("./Data/RawData/DMA Exercise.xlsx")
+addWorksheet(wb, "Test", gridLines=FALSE)
+writeData(wb, "Test", iris)
+
+fontStyle<-createStyle(
+ fontName="Calibri",
+  fontSize=11,
+  fontColour= "#000000",
+  halign="left",
+  borderColour="#000000",
+)
+writeData(wb, "Test", "This is an example", startCol = 1, startRow = 1)
+addStyle(wb, sheet="Test", fontStyle , rows=1, cols=1, gridExpand=TRUE) 
+
+#Add the data
+writeData(wb,"Test",iris, startCol = 1, startRow = 3, rowNames = FALSE)
+setColWidths(wb, "Test", cols=1:6, widths=21)
+
+#Add the table header style
+headerStyle<-createStyle(
+ fontName="Calibri",
+  fontSize=11,
+ textDecoration="bold",
+  fontColour= "#000000",
+  halign="center",
+  borderColour="#000000",
+)
+addStyle(wb, sheet="Test", headerStyle , rows=3, cols=1:5, gridExpand=TRUE) 
+
+#Add the table body style
+BodyStyle<-createStyle(
+fontName="Calibri",
+fontSize=11,
+border="TopBottomLeftRight",
+borderColour="#000000")
+addStyle(wb, sheet="Test",BodyStyle , rows=4:(nrow(iris)+3), cols=1:5, gridExpand=TRUE) 
+
+
+##Add a plot
+p1 <- qplot(mpg,
+  data = mtcars, geom = "density",
+  fill = as.factor(gear), alpha = I(.5), main = "Distribution of Gas Mileage"
+)
+p2 <- qplot(age, circumference,
+  data = Orange, geom = c("point", "line"), colour = Tree
+)
+
+## Insert currently displayed plot to sheet 1, row 1, column 1
+print(p1) # plot needs to be showing
+insertPlot(wb, "Test", startRow = 1,  startCol = ncol(iris)+2, width = 6, height = 4, fileType = "png", units = "in")
+
+## Insert plot 2
+print(p2)
+insertPlot(wb, "Test", startRow = 15,  startCol = ncol(iris)+2, width = 6, height = 4, fileType = "png", units = "in")
+
+
+#Saving the workbook
+saveWorkbook(wb,"./Output/Data/DMAExercise_workings.xlsx",overwrite = T)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
+
+# Exploratory Data Analysis and Visualisation
+
+Exploratory Data Analysis was undertaken to examine data quality and to consider questions for our downstream analysis. This section of the report describes the primary characteristic of the data using summary statistics and visualisation techniques. First, we will examine the data to look for outlines, and missing records and deter me whether the variance and medians of the different wards differ to determine whether they are to be analysed in isolation or can be combined to increase the sample size in downstream analysis.
+
+```{r readxl}
+library(readxl)
+#The readxl package imports data from Excel (.xlxs) files and into R. 
+
+#Readin
+```
+
+##R mark down
 
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
@@ -28,3 +268,5 @@ plot(pressure)
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
