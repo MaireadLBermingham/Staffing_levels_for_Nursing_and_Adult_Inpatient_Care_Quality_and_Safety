@@ -365,7 +365,7 @@ CollectionintervalB<- qic(CollectionInterval, x=Date,
     point.size = 1.6)
 print(CollectionintervalB)
 
-CollectionintervalBtext<-"The collection interval for Clinical area C was more consistent, only missing three sample dates. No shifts or trends were seen on the run chart. Six runs can be seen on the run chant, which is below the lower limit of 10, suggesting statistically significant change."
+CollectionintervalBtext<-"The collection interval for Clinical area B was more consistent, only missing three sample dates. No shifts or trends were seen on the run chart. Six runs can be seen on the run chant, which is below the lower limit of 10, suggesting statistically significant change."
 print(CollectionintervalBtext)
 
 
@@ -373,7 +373,7 @@ print(CollectionintervalBtext)
 SkillmixA<- qic(Skillmix, x=Date, 
     data  = DMA_dataA,
     title  = 'Run chart of Skill mix for Clinical area A',
-    ylab  = 'Collection interval (days)',
+    ylab  = 'Skill mix',
     xlab  = 'Date',
     point.size = 1.6)
 
@@ -387,7 +387,7 @@ print(SkillmixAtext)
 SkillmixB<- qic(Skillmix, x=Date, 
     data  = DMA_dataB,
     title  = 'Run chart of Skill mix for Clinical area B',
-    ylab  = 'Collection interval (days)',
+    ylab  = 'Skill mix',
     xlab  = 'Date',
     point.size = 1.6)
 
@@ -396,29 +396,29 @@ print(SkillmixB)
 SkillmixBtext<-"The Skill mix for Clinical area B was also low and variable and only exceeded the benchmark of .65 on Thursday, the 12th and 19th of January 2023. Clinical area A also exceeded the benchmark on the 19th of January, 2023. It was interesting to hear what insights Senior Charge Nurse has as to why performance improved dramatically at the two Clinical areas on that date.  No shifts or trends were seen on the run chart. Eighteen runs can be seen on the run chant, which is below the upper limit of 20, suggesting no statistically significant change. However, an astronomical point of .33 was measured on Sunday the 29th of January 2023."
 print(SkillmixBtext)
 
-# Plot Run chart of Actual relative to required nursing Workforce for Clinical area A
+# Plot Run chart of Actual relative to required nursing workforce for Clinical area A
 WorkforceA<- qic(ActualRelativeToRequiredNursingWorkforce, x=Date, 
     data  = DMA_dataA,
-    title  = 'Run chart of Actual relative to required nursing Workforce for Clinical area A',
-    ylab  = 'Collection interval (days)',
+    title  = 'Run chart of Actual relative to required nursing workforce for Clinical area A',
+    ylab  = 'Actual relative to required nursing Workforce',
     xlab  = 'Date',
     point.size = 1.6)
 print(WorkforceA)
 
-WorkforceAtext<-"The Actual relative to required nursing Workforce for Clinical area A fell below our set benchmark of one on six occasions.  No shifts or trends were seen on the run chart. Eleven runs can be seen on the run chant, which is below the upper limit of 20, suggesting no statistically significant change. However, an astronomical point of 1.62 was measured on Sunday the 22nd of January 2023."
+WorkforceAtext<-"The Actual relative to required nursing workforce for Clinical area A fell below our set benchmark of one on six occasions.  No shifts or trends were seen on the run chart. Eleven runs can be seen on the run chant, which is below the upper limit of 20, suggesting no statistically significant change. However, an astronomical point of 1.62 was measured on Sunday the 22nd of January 2023."
 print(WorkforceAtext)
 
 
-# Plot Run chart of Actual relative to required nursing Workforce for Clinical area B
+# Plot Run chart of Actual relative to required nursing workforce for Clinical area B
 WorkforceB<- qic(ActualRelativeToRequiredNursingWorkforce, x=Date, 
     data  = DMA_dataB,
-    title  = 'Run chart of Actual relative to required nursing Workforce for Clinical area B',
-    ylab  = 'Collection interval (days)',
+    title  = 'Run chart of Actual relative to required nursing workforce for Clinical area B',
+    ylab  = 'Actual relative to required nursing Workforce',
     xlab  = 'Date',
     point.size = 1.6)
 print(WorkforceB)
 
-WorkforceBtext<-"The Actual relative to required nursing Workforce for Clinical area B fell below our set benchmark of one on nine occasions.  No shifts or trends were seen on the run chart. Eleven runs can be seen on the run chant, which is above the lower limit of 10, suggesting no statistically significant change. However, astronomical points of 1.79 and 1.76 were measured on Monday the 9th and Sunday the 29th of January 2023. Another astronomical point of 0.65 was measured on the 31st of January, 2023."
+WorkforceBtext<-"The Actual relative to required nursing workforce for Clinical area B fell below our set benchmark of one on nine occasions.  No shifts or trends were seen on the run chart. Eleven runs can be seen on the run chant, which is above the lower limit of 10, suggesting no statistically significant change. However, astronomical points of 1.79 and 1.76 were measured on Monday the 9th and Sunday the 29th of January 2023. Another astronomical point of 0.65 was measured on the 31st of January, 2023."
 
 print(WorkforceBtext)
 ```
